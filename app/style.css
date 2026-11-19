@@ -1,12 +1,121 @@
-html, body { margin: 0; height: 100%; background: #f2f0f4; color: #1d1b22; font: 15px/1.4 system-ui, sans-serif; }
-.app { display: flex; gap: 32px; align-items: center; justify-content: center; height: 100%; padding: 24px; box-sizing: border-box; }
-.controls { display: flex; flex-direction: column; gap: 14px; width: 280px; }
-.controls h1 { margin: 0; font-size: 28px; }
-.controls p { margin: 0; color: #5c5866; }
-label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
-input[type=text] { font: inherit; padding: 8px; border: 1px solid #c9c4d1; border-radius: 6px; }
-button { font: inherit; font-weight: 700; padding: 10px; border: 0; border-radius: 6px; background: #1d1b22; color: #fff; cursor: pointer; }
-canvas { width: min(70vh, 60vw); height: min(70vh, 60vw); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); }
-body.shot-cover .controls { display: none; }
-body.shot-cover .app { padding: 0; }
-body.shot-cover canvas { width: 100vw; height: 100vh; box-shadow: none; }
+/* Vice Press editor: a dark neon workbench. Fonts are local files under fonts/,
+   both under the SIL Open Font License (see fonts/OFL.txt). */
+@font-face { font-family: 'Anton'; src: url('./fonts/Anton-Regular.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Pacifico'; src: url('./fonts/Pacifico-Regular.ttf') format('truetype'); font-display: swap; }
+
+:root {
+  --bg: #14101a;
+  --panel: #1e1828;
+  --panel-2: #262033;
+  --line: #3a3049;
+  --text: #f4f1fa;
+  --muted: #a79db8;
+  --gold: #ffd319;
+  --pink: #ff2975;
+  --cyan: #00e5ff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+
+.app { display: flex; gap: 24px; height: 100%; padding: 20px; }
+.controls { width: 340px; flex: none; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding-right: 6px; }
+.controls::-webkit-scrollbar { width: 8px; }
+.controls::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+.brand h1 {
+  margin: 0 0 4px; font-family: 'Anton', sans-serif; font-weight: 400; font-size: 34px; letter-spacing: 1px;
+  background: linear-gradient(90deg, var(--gold), var(--pink) 60%, #b537f2);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.brand p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.group h2 { margin: 0; font-family: 'Anton', sans-serif; font-weight: 400; font-size: 15px; letter-spacing: 1px; color: var(--gold); }
+
+.picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pick { border: 2px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 8px; padding: 8px; cursor: pointer; text-align: left; font: inherit; }
+.pick:hover { border-color: var(--muted); }
+.pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.pick .name { display: block; font-weight: 700; font-size: 13px; margin-top: 6px; }
+.pick .blurb { display: block; color: var(--muted); font-size: 11px; line-height: 1.3; }
+
+/* Mini panel diagrams for the layout picker. */
+.thumb { height: 44px; display: flex; gap: 3px; }
+.thumb i { display: block; background: linear-gradient(135deg, #ff7e5f, #8c1eff); border-radius: 2px; flex: 1; }
+.thumb.hero i:first-child { flex: 1.6; }
+.thumb.hero .col { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.thumb.grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.thumb.strip { flex-direction: column; }
+.thumb.strip .row2 { flex: 1; display: flex; gap: 3px; }
+.thumb.bleed i { flex: 1; }
+
+.swatch { height: 34px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.25); }
+
+.slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.slot-btn { border: 2px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 8px; padding: 8px 4px; cursor: pointer; font: inherit; font-weight: 700; font-size: 12px; }
+.slot-btn[aria-pressed="true"] { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+.slot-btn.has-photo { color: var(--gold); }
+
+.row { display: flex; gap: 8px; align-items: flex-end; }
+.row > * { flex: 1; }
+.file-btn { display: block; text-align: center; background: var(--panel-2); border: 1px dashed var(--muted); border-radius: 8px; padding: 9px 6px; cursor: pointer; font-weight: 700; font-size: 12px; }
+.file-btn:hover { border-color: var(--gold); }
+.file-btn input { display: none; }
+button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px; cursor: pointer; font: inherit; font-weight: 700; }
+button.secondary:hover { border-color: var(--gold); }
+.hint { margin: 0; color: var(--muted); font-size: 12px; }
+
+label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: 13px; }
+input[type="text"], select { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #120e19; color: var(--text); }
+input[type="text"]:focus, select:focus { outline: 2px solid var(--gold); outline-offset: 0; border-color: transparent; }
+input[type="range"] { width: 100%; accent-color: var(--gold); }
+.slider-label { font-weight: 600; font-size: 13px; }
+.lettering { display: flex; gap: 12px; }
+.lettering label { flex-direction: row; align-items: center; gap: 5px; font-weight: 600; }
+.check { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; }
+
+.sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.size-btn { border: 2px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 8px; padding: 8px 4px; cursor: pointer; font: inherit; font-size: 12px; line-height: 1.4; }
+.size-btn[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+button.export {
+  font-family: 'Anton', sans-serif; font-size: 20px; letter-spacing: 1px; padding: 12px; border: 0; border-radius: 10px;
+  background: linear-gradient(90deg, var(--pink), #ff7e5f 55%, var(--gold)); color: #fff; cursor: pointer;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+button.export:hover { filter: brightness(1.08); }
+#status { margin: 0; color: var(--muted); font-size: 12px; min-height: 17px; }
+
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.preview { position: relative; max-width: 100%; max-height: calc(100% - 30px); display: flex; }
+#cover { max-width: 100%; max-height: calc(100vh - 90px); width: auto; height: auto; box-shadow: 0 12px 44px rgba(0, 0, 0, 0.55); cursor: grab; touch-action: none; }
+#cover.dragging { cursor: grabbing; }
+.selection { position: absolute; border: 3px solid var(--cyan); border-radius: 2px; pointer-events: none; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 18px rgba(0, 229, 255, 0.5); }
+.stage-hint { margin: 0; color: var(--muted); font-size: 12px; }
+
+/* Cover-only screenshot scenes: the canvas fills the viewport. */
+body.shot-cover .controls, body.shot-cover .stage-hint { display: none; }
+body.shot-cover .app { padding: 0; gap: 0; }
+body.shot-cover .stage { width: 100%; }
+body.shot-cover .preview { max-height: 100%; }
+body.shot-cover #cover { max-height: 100vh; width: 100vw; height: 100vh; object-fit: fill; box-shadow: none; }
+
+/* Short viewports: compact the controls so every group stays in reach. */
+@media (max-height: 820px) {
+  .app { padding: 14px; gap: 16px; }
+  .controls { gap: 10px; }
+  .brand h1 { font-size: 28px; }
+  .brand p { display: none; }
+  .group { padding: 10px; gap: 7px; }
+  .group h2 { font-size: 14px; }
+  .thumb { height: 34px; }
+  .pick .blurb { display: none; }
+  .pick { padding: 6px; }
+  .pick .name { margin-top: 4px; }
+  .swatch { height: 26px; }
+  .slot-btn { padding: 6px 4px; }
+  .file-btn, button.secondary { padding: 7px 6px; }
+  input[type="text"], select { padding: 7px 9px; }
+  button.export { padding: 10px; font-size: 18px; }
+  .hint { display: none; }
+}
